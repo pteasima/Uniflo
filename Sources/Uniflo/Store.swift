@@ -92,14 +92,14 @@ public extension Store where Action: EmptyInitializable {
       self.dispatch(action)
     }
   }
-  public subscript<ActionParam>(dynamicMember keyPath: WritableKeyPath<Action, ActionParam?>) -> (ActionParam) -> Void {
+  subscript<ActionParam>(dynamicMember keyPath: WritableKeyPath<Action, ActionParam?>) -> (ActionParam) -> Void {
       {
         var action = Action()
         action[keyPath: keyPath] = $0
         self.dispatch(action)
       }
   }
-  public subscript<P1,P2>(dynamicMember keyPath: WritableKeyPath<Action, (P1, P2)?>) -> (P1, P2) -> Void {
+  subscript<P1,P2>(dynamicMember keyPath: WritableKeyPath<Action, (P1, P2)?>) -> (P1, P2) -> Void {
       {
         var action = Action()
         action[keyPath: keyPath] = ($0, $1)
@@ -109,7 +109,7 @@ public extension Store where Action: EmptyInitializable {
 }
 
 public extension Store where State: Application, State.Action == Action {
-  public static func application(state : State, environment: State.Environment) -> Store {
+  static func application(state : State, environment: State.Environment) -> Store {
     self.application(environment: environment, initialState: state, initialEffects: state.initialEffects, reduce: { $0.reduce($1) }, subscriptions: { $0.subscriptions() })
   }
 }
