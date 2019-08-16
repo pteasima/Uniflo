@@ -9,8 +9,8 @@ public struct One: EmptyInitializable, Equatable, Hashable, Codable {
 public protocol Application {
   associatedtype Action = Never
   associatedtype Environment = One
-  public typealias Effect = Uniflo.Effect<Action, Environment>
-  public typealias SubscriptionEffect = Uniflo.SubscriptionEffect<Action, Environment>
+  typealias Effect = Uniflo.Effect<Action, Environment>
+  typealias SubscriptionEffect = Uniflo.SubscriptionEffect<Action, Environment>
   var initialEffects: [Effect] { get }
   mutating func reduce(_ action: Action) -> [Effect]
   func subscriptions() -> [SubscriptionEffect]
