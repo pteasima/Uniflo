@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "Tagged",
+        "repositoryURL": "https://github.com/pointfreeco/swift-tagged.git",
+        "state": {
+          "branch": null,
+          "revision": "890b791f3e28de6ded242fe02c2b8dfea1ee32b6",
+          "version": "0.4.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
