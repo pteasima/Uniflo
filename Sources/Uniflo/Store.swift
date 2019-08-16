@@ -2,26 +2,28 @@ import SwiftUI
 import Combine
 import Tagged
 
-public struct Unit: EmptyInitializable, Equatable, Hashable, Codable {
+public struct One: EmptyInitializable, Equatable, Hashable, Codable {
   public init() {}
 }
 
 public protocol Application {
   associatedtype Action = Never
-  associatedtype Environment = Unit
-  var initialEffects: [Effect<Action, Environment>] { get }
-  mutating func reduce(_ action: Action) -> [Effect<Action, Environment>]
-  func subscriptions() -> [SubscriptionEffect<Action, Environment>]
+  associatedtype Environment = One
+  typealias Effect = Uniflo.Effect<Action, Environment>
+  typealias SubscriptionEffect = Uniflo.SubscriptionEffect<Action, Environment>
+  var initialEffects: [Effect] { get }
+  mutating func reduce(_ action: Action) -> [Effect]
+  func subscriptions() -> [SubscriptionEffect]
 }
 public extension Application {
-  var initialEffects: [Effect<Action, Environment>] {
+  var initialEffects: [Effect] {
     []
   }
-  func reduce(_ action: Action) -> [Effect<Action, Environment>] {
+  func reduce(_ action: Action) -> [Effect] {
     print("using default reduce implementation for application \(self), action: \(action)")
     return []
   }
-  func subscriptions() -> [SubscriptionEffect<Action, Environment>] {
+  func subscriptions() -> [SubscriptionEffect] {
     []
   }
 }
