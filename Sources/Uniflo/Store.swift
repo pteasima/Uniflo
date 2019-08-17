@@ -116,7 +116,6 @@ public extension Store where State: Application, State.Action == Action {
 
 fileprivate final class ElmProgram<State, Action, Environment>: EffectManager {
   private(set) lazy var dispatch: (Action) -> Void = {
-    print($0)
     self._dispatch($0)
   }
   let willChange = PassthroughSubject<State, Never>()
@@ -179,7 +178,6 @@ fileprivate final class ElmProgram<State, Action, Environment>: EffectManager {
           
           while !self.queue.isEmpty {
             let currentMsg = self.queue.removeFirst()
-            print(currentMsg)
             let effs = update(&self.draftState, currentMsg)
             processEffects(effs)
           }
