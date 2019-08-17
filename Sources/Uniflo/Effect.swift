@@ -8,7 +8,8 @@ public protocol EffectManager {
     func cancelEffect(id: Tagged<EffectManager, String>)
 }
 
-// TODO: I jumped through hoops to enable command cancellation but now Im thinking: If it needs to be tracked in state, shouldnt it just be a Subscription? These are not equivalent (for cancellable command you just store the ID, whereas to even create the subscription you need to store more data), but I think they can achieve same results. I think Elm was considering adding command cancellation but need to see how they ended up deciding. I would gladly take explaining to newbies why X needs to be a Subscription over introducing ambiguity.
+// I jumped through hoops to enable command cancellation but now Im thinking: If it needs to be tracked in state, shouldnt it just be a Subscription? These are not equivalent (for cancellable command you just store the ID, whereas to even create the subscription you need to store more data), but I think they can achieve same results. I think Elm was considering adding command cancellation but need to see how they ended up deciding. I would gladly take explaining to newbies why X needs to be a Subscription over introducing ambiguity.
+// Did more research. Elm doesnt support this natively for all Cmds, but for example this API https://package.elm-lang.org/packages/elm/http/latest/Http#cancel suggests that what Im doing isnt far off (except Elm lets you specify a uid (tracker) whereas I have the Effect generate its own uid and make it accessible to the reducer). I guess theres space for effect cancellation afterall (using only Subscriptions for anything cancellable is perhaps too unwieldy. Plus, subscriptions arent really failable.)
 public struct Effect<Action, Environment> {
     public let id: EffectManager.EffectID
     public let perform: (EffectManager, Environment) -> AnyPublisher<Action, Never>
@@ -65,6 +66,27 @@ public prefix func +<Action, Environment, Output, P: Publisher>(params: (KeyPath
 // it was getting crazy with 6 generic params
 // wasnt much safer than raw anyway (could still supply arbitrary closure in place of "serviceMethod")
 // prefer raw-closure syntax when you cant use keyPath-input-transform syntax
+
+// MARK: add failable effect
+
+public prefix func +<Action, Environment, Input, Output, Failure, P: Publisher>(params: (KeyPath<Environment, (Input) -> P>, Input, (Result<Output, Failure>) -> Action)) -> Effect<Action, Environment> where P.Output == Output, P.Failure == Failure {
+    Effect { environment in
+      environment[keyPath: params.0](params.1)
+              .map(Result.success)
+              .catch { Just(.failure($0)) }
+              .map(params.2)
+    }
+}
+
+//no input
+public prefix func +<Action, Environment, Output, Failure, P: Publisher>(params: (KeyPath<Environment, () -> P>, (Result<Output, Failure>) -> Action)) -> Effect<Action, Environment> where P.Output == Output, P.Failure == Failure {
+    Effect { environment in
+        environment[keyPath: params.0]()
+          .map(Result.success)
+          .catch { Just(.failure($0)) }
+          .map(params.1)
+    }
+}
 
 // MARK: cancel effect
 
