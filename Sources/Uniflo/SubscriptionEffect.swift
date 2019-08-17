@@ -101,6 +101,7 @@ public extension SubscriptionEffect where Action: EmptyInitializable {
             .map(Result.success)
             .catch { error in
               failablePerform()
+                .delay(for: 1, scheduler: DispatchQueue.main)
                 .prepend(.failure(error))
           }
           .eraseToAnyPublisher()
@@ -123,7 +124,11 @@ public extension SubscriptionEffect where Action: EmptyInitializable {
             .map(Result.success)
             .catch { error in
               failablePerform()
-                .prepend(.failure(error))
+//              .print("retry")
+              .prepend(.failure(error))
+                // this prevents the infinite loop but I dont yet fully understand why.
+              .subscribe(on: DispatchQueue.main)
+//              .print("whole thing")
           }
           .eraseToAnyPublisher()
         }

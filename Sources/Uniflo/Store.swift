@@ -141,6 +141,7 @@ fileprivate final class ElmProgram<State, Action, Environment>: EffectManager {
         let uuid = $0.id
         var completedAlready = false
         cancellable = AnyCancellable($0.perform(self, effects)
+          .subscribe(on: DispatchQueue.main) // !!! subscriptions to effects are delayed because synchronous effects wont work with current setup, tracked here https://trello.com/c/Fax0Lvcc
           .sink(receiveCompletion: { [weak self] _ in
             // effectCancellables shouldnt grow indefinitely so we make sure we always remove it on completion
             self?.cancelEffect(id: uuid)
@@ -151,7 +152,7 @@ fileprivate final class ElmProgram<State, Action, Environment>: EffectManager {
         }
       }
       
-      let subs = subscriptions(self.state)
+      let subs = subscriptions(self.draftState)
       // we cant do a collection.difference here, since that can produce .inserts and .removes for reordering
       // we dont care about order, just cancel and remove old ones and append new ones
       self.subscriptions.forEach { oldSub in
@@ -163,7 +164,9 @@ fileprivate final class ElmProgram<State, Action, Environment>: EffectManager {
       }
       subs.forEach { newSub in
         if !self.subscriptions.contains(where: { $0.subscription == newSub }) {
-          let cancellable = AnyCancellable(newSub.perform(effects).sink(receiveValue: self.dispatch))
+          let cancellable = AnyCancellable(newSub.perform(effects)
+            .subscribe(on: DispatchQueue.main) // !!! subscriptions to effects are delayed because synchronous effects wont work with current setup, tracked here https://trello.com/c/Fax0Lvcc
+            .sink(receiveValue: self.dispatch))
           self.subscriptions.append((newSub, cancellable))
         }
       }
