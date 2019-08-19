@@ -141,7 +141,6 @@ fileprivate final class ElmProgram<State, Action, Environment>: EffectManager {
         let uuid = $0.id
         var completedAlready = false
         cancellable = AnyCancellable($0.perform(self, effects)
-          .subscribe(on: DispatchQueue.main) // !!! subscriptions to effects are delayed because synchronous effects wont work with current setup, tracked here https://trello.com/c/Fax0Lvcc
           .sink(receiveCompletion: { [weak self] _ in
             // effectCancellables shouldnt grow indefinitely so we make sure we always remove it on completion
             self?.cancelEffect(id: uuid)
@@ -158,15 +157,12 @@ fileprivate final class ElmProgram<State, Action, Environment>: EffectManager {
       self.subscriptions.forEach { oldSub in
         if !subs.contains(oldSub.subscription) {
           oldSub.cancellable.cancel()
-          // TODO: removeFirst(where:)
           self.subscriptions.removeAll { $0.subscription == oldSub.subscription }
         }
       }
       subs.forEach { newSub in
         if !self.subscriptions.contains(where: { $0.subscription == newSub }) {
-          let cancellable = AnyCancellable(newSub.perform(effects)
-            .subscribe(on: DispatchQueue.main) // !!! subscriptions to effects are delayed because synchronous effects wont work with current setup, tracked here https://trello.com/c/Fax0Lvcc
-            .sink(receiveValue: self.dispatch))
+          let cancellable = AnyCancellable(newSub.perform(effects).sink(receiveValue: self.dispatch))
           self.subscriptions.append((newSub, cancellable))
         }
       }
@@ -192,7 +188,7 @@ fileprivate final class ElmProgram<State, Action, Environment>: EffectManager {
       if Thread.isMainThread {
         dispatchOnMainThread()
       } else {
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { //TODO: make sure our eventual solution for retrying subscriptions works if subscription runs off main thread
           dispatchOnMainThread()
         }
       }
