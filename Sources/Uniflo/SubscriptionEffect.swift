@@ -122,13 +122,15 @@ public extension SubscriptionEffect where Action: EmptyInitializable {
         func failablePerform() -> AnyPublisher<Result<Output, Failure>, Never> {
           environment[keyPath: publisherKeyPath]()
             .map(Result.success)
-            .catch { error in
-              failablePerform()
-//              .print("retry")
+            .catch { error -> Publishers.HandleEvents<Publishers.Concatenate<Publishers.Sequence<[Result<Output, Failure>], Never>, Deferred<AnyPublisher<Result<Output, Failure>, Never>>>> in
+              //this is a workaround for https://twitter.com/pteasima/status/1163453601324392453?s=20, where the prepend eats up the cancelled event
+              var isCancelled = false
+              return Deferred { isCancelled ? Empty<Result<Output, Failure>, Never>(completeImmediately: true).eraseToAnyPublisher() : failablePerform() }
+//              .print("what now?")
               .prepend(.failure(error))
-                // this prevents the infinite loop but I dont yet fully understand why.
-              .subscribe(on: DispatchQueue.main)
-//              .print("whole thing")
+              .handleEvents(receiveCancel: {
+                isCancelled = true
+              })
           }
           .eraseToAnyPublisher()
         }
